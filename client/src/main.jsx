@@ -5,7 +5,7 @@ import "./index.css";
 import { BrowserRouter } from "react-router-dom";
 import axios from "axios";
 import ContextProvider from "./context/Context.jsx";
-(axios.defaults.baseURL = "http://localhost:8000"),
+(axios.defaults.baseURL = "https://write-api-3fai.onrender.com"),
 
     ReactDOM.createRoot(document.getElementById("root")).render(
         <React.StrictMode>
@@ -14,5 +14,5 @@ import ContextProvider from "./context/Context.jsx";
                     <App />
                 </ContextProvider>
             </BrowserRouter>
-        </React.StrictMode>
+        </React.StrictMode> 
     );
