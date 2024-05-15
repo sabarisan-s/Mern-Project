@@ -12,7 +12,7 @@ const uploadsMiddleware = multer({ dest: "uploads/" });
 
 const auth = require("./auth");
 const PostModel = require("./models/PostModel");
-
+app.use('/uploads',express.static('uploads'))
 app.use(cors());
 app.use(express.json());
 
@@ -126,7 +126,6 @@ app.post("/login", async (req, res) => {
 app.get("/user", auth, async (req, res) => {
     try {
         const { user } = req.user;
-        console.log(req.user);
         const findUser = await UserModel.findOne({ _id: user._id });
         if (!findUser) {
             return res.status(401).json({ error: true, message: "Not user" });
@@ -188,7 +187,7 @@ app.get("/post/:id", async (req, res) => {
 // get method /post
 app.get("/post", async (req, res) => {
     try {
-        const post = await PostModel.find()
+        const post = await PostModel.find({})
             .populate("author", ["userName"])
             .sort({ createdAt: -1 })
             .limit(20);
@@ -230,7 +229,7 @@ app.put("/post/:id", auth, async (req, res) => {
             author: user._id,
         });
         console.log(post);
-        
+
         res.status(200).json({
             post,
             error: false,
