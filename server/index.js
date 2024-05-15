@@ -12,7 +12,7 @@ const uploadsMiddleware = multer({ dest: "uploads/" });
 
 const auth = require("./auth");
 const PostModel = require("./models/PostModel");
-app.use('/uploads',express.static('uploads'))
+app.use("/uploads", express.static(__dirname + "/uploads"));
 app.use(cors());
 app.use(express.json());
 
@@ -142,6 +142,18 @@ app.post("/post", auth, uploadsMiddleware.single("photo"), async (req, res) => {
         const { title, description } = req.body;
         const { user } = req.user;
 
+        if (!title || !description) {
+            return res
+                .status(400)
+                .json({ error: true, message: "Fill * required" });
+        }
+
+        if (!req.file) {
+            return res
+                .status(400)
+                .json({ error: true, message: "Photo required" });
+        }
+
         let newPath;
         if (req.file) {
             const { originalname, path } = req?.file;
@@ -174,10 +186,10 @@ app.post("/post", auth, uploadsMiddleware.single("photo"), async (req, res) => {
 app.get("/post/:id", async (req, res) => {
     try {
         const { id } = req.params;
-        const post = await PostModel.find({ _id: id })
-            .populate("author", ["userName"])
-            .sort({ createdAt: -1 })
-            .limit(20);
+        const post = await PostModel.findOne({ _id: id }).populate("author", [
+            "userName",
+        ]);
+
         res.json({ post, error: false });
     } catch (error) {
         res.status(500).json({ error: true, message: "Internal server error" });
@@ -198,47 +210,54 @@ app.get("/post", async (req, res) => {
 });
 
 // put method /post/:id
-app.put("/post/:id", auth, async (req, res) => {
-    try {
-        const { title, description } = req.body;
-        const { user } = req.user;
-        const { id } = req.params;
+app.put(
+    "/post/:id",
+    auth,
+    uploadsMiddleware.single("photo"),
+    async (req, res) => {
+        try {
+            const { title, description } = req.body;
+            const { user } = req.user;
+            const { id } = req.params;
 
-        let newPath;
-        if (req.file) {
-            const { originalname, path } = req?.file;
-            const parts = originalname.split(".");
-            const ext = parts[parts.length - 1];
-            newPath = path + "." + ext;
-            fs.renameSync(path, newPath);
+            let newPath;
+            if (req.file) {
+                const { originalname, path } = req?.file;
+                const parts = originalname.split(".");
+                const ext = parts[parts.length - 1];
+                newPath = path + "." + ext;
+                fs.renameSync(path, newPath);
+            }
+
+            const checkUser = await UserModel.findOne({ _id: user._id });
+            if (!checkUser) {
+                return res
+                    .status(403)
+                    .json({ error: true, message: "Not authorized user" });
+            }
+
+            const post = await PostModel.findOne({ _id: id, author: user._id });
+
+            await post.updateOne({
+                title,
+                description,
+                photo: newPath ? newPath : post.photo,
+                author: user._id,
+            });
+
+            res.status(200).json({
+                post,
+                error: false,
+                message: "Updated successfully!",
+            });
+        } catch (error) {
+            res.status(500).json({
+                error: true,
+                message: "Internal server error",
+            });
         }
-
-        const checkUser = await UserModel.findOne({ _id: user._id });
-        if (!checkUser) {
-            return res
-                .status(403)
-                .json({ error: true, message: "Not authorized user" });
-        }
-
-        const post = await PostModel.findOne({ _id: id, author: user._id });
-
-        await post.updateOne({
-            title,
-            description,
-            photo: newPath ? newPath : post.photo,
-            author: user._id,
-        });
-        console.log(post);
-
-        res.status(200).json({
-            post,
-            error: false,
-            message: "Updated successfully!",
-        });
-    } catch (error) {
-        res.status(500).json({ error: true, message: "Internal server error" });
     }
-});
+);
 
 mongoose
     .connect(process.env.MONGODB_URL)

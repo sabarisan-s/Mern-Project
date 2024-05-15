@@ -49,7 +49,7 @@ const ContextProvider = ({ children }) => {
                 error.response.data.message
             ) {
                 setErrorMsg(error.response.data.message);
-                console.log(error.response.data.message);
+
             }
         } finally {
             setIsLoading(false);
@@ -130,6 +130,7 @@ const ContextProvider = ({ children }) => {
         handleLogout,
         userData,
         postData,
+        getPostData,setIsLoading
     };
 
     return <Context.Provider value={contextValue}>{children}</Context.Provider>;

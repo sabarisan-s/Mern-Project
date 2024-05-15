@@ -15,10 +15,15 @@ const Header = () => {
                         {userData ? (
                             <>
                                 <div className="hidden font-semibold rounded-full sm:flex justify-center items-center w-10 h-10  bg-slate-400 uppercase ">
-                                    {userData.userName.split("")[1]}
+                                    {userData?.userName?.split("")[0]}
                                 </div>
                                 <Link to={"/create"}>Create post</Link>
-                                <a onClick={handleLogout}>LogOut</a>
+                                <a
+                                    className="cursor-pointer"
+                                    onClick={handleLogout}
+                                >
+                                    LogOut
+                                </a>
                             </>
                         ) : (
                             <>
